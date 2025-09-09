@@ -47,6 +47,18 @@ def list_profiles_from_path(parent_path: str) -> list:
         raise FileNotFoundError(f"Sample directory not found: {parent_path}")
     return sorted([p for p in glob(os.path.join(parent_path, "*")) if is_profile_dir(p)])
 
+def make_bam_args(wc) -> str:
+    """Construct the -bams argument string for a given wildcard object.
+    Returns an empty string when `BAM_DIR` is not set.
+    """
+    if not BAM_DIR:
+        return ""
+    sample_a = wc.pair_name.split('_vs_')[0]
+    sample_b = wc.pair_name.split('_vs_')[1]
+    bam_a = os.path.join(BAM_DIR, f"{sample_a}.sorted.bam")
+    bam_b = os.path.join(BAM_DIR, f"{sample_b}.sorted.bam")
+    return f"-bams {bam_a} {bam_b}"
+
 def populate_target_map():
     """
     The main logic hub. Reads the pairs_tsv and, based on the comparison_mode,
@@ -54,7 +66,7 @@ def populate_target_map():
     """
     df = pd.read_csv(PAIRS_TSV, sep='\t', comment='#', header=0, names=['sample1', 'sample2'])
     df.dropna(inplace=True)
-    print(df)
+    # print(df)
 
     if df.empty:
         raise ValueError(f"No valid pairs found in {PAIRS_TSV}")
@@ -141,38 +153,36 @@ rule compare_instrain:
         breadth=PARAMS.get("breadth", "0.05"),
         cov=PARAMS.get("cov", "0.0025"),
         ani=PARAMS.get("ani", "0.99"),
+        database_mode_flag=("--database_mode" if PARAMS.get("database_mode", False) else ""),
         args_stb=f"--stb {PARAMS['stbPath']}" if PARAMS.get("stbPath") else "",
-        # Conditionally construct the -bams argument string
-        bam_args=lambda wc: (
-            f"-bams {os.path.join(BAM_DIR, f'{wc.pair_name.split('_vs_')[0]}.sorted.bam')} "
-            f"{os.path.join(BAM_DIR, f'{wc.pair_name.split('_vs_')[1]}.sorted.bam')}"
-        ) if BAM_DIR else ""
-    log:
-        "logs/{group}/{pair_name}.log"
+        # Conditionally construct the -bams argument string using helper
+        bam_args=lambda wc: make_bam_args(wc)
+    # log:
+    #     "logs/{group}/{pair_name}.log"
     threads:
-        RESOURCES.get("threads", 16)
+        RESOURCES.get("threads", 8)
     resources:
-        mem_mb=RESOURCES.get("mem_mb", 16000),
-        time=RESOURCES.get("time", "24:00:00")
+        mem_mb=RESOURCES.get("mem_mb", 10000),
+        time=RESOURCES.get("time", "8:00:00")
     shell:
         """
         # Optional environment setup for clusters using modules
         if [[ "{USE_MODULES}" == "True" ]]; then
           module purge
-          module load anaconda3
-          source activate "{CONDA_ENV_NAME}"
+          module load anaconda3/2024.10
+          conda activate {CONDA_ENV_NAME}
         fi
 
         inStrain compare \
             -i {input.profileA} {input.profileB} \
             -o {output.outDir} \
             -p {threads} \
-            --database_mode \
+            {params.database_mode_flag} \
             --store_mismatch_locations \
             --group_length {params.group_length} \
             --breadth {params.breadth} \
             -cov {params.cov} \
             -ani {params.ani} \
             {params.bam_args} \
-            {params.args_stb} > "{log}" 2>&1
+            {params.args_stb}
         """
