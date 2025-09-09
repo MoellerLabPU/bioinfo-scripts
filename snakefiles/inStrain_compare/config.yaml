@@ -1,0 +1,52 @@
+run_name: "inStrain_compare_test"
+
+# --- 1. CORE CONFIGURATION ---
+
+# - "type":    Compares all profiles between sample types (e.g., human vs. giraffe).
+#              Requires `profiles_root` to be set.
+# - "path":    Compares all profiles within specified parent directories.
+# - "profile": Compares specific pairs of .IS profile directories directly.
+comparison_mode: "profile"
+
+# Root directory for "type" mode, containing subdirectories for each sample type.
+# Not used for "path" or "profile" modes.
+profiles_root: "/scratch/gpfs/AMOELLER/sidd/kate_animal_microbiome/inStrain"
+
+# Path to the TSV file defining pairs to compare.
+# This file should have two columns with no header.
+# The meaning of the columns depends on the `comparison_mode`.
+pairs_tsv: "/scratch/gpfs/AMOELLER/sidd/kate_animal_microbiome/inStrain/profile_path.tsv"
+
+# Directory to store all comparison outputs.
+compare_dir: "/scratch/gpfs/AMOELLER/sidd/kate_animal_microbiome/inStrain/instrain_compare_test"
+
+# Optional: Directory containing `.sorted.bam` files for comparison.
+# If set, the pipeline will include the `-bams` argument in the `inStrain compare` command.
+bam_dir: null
+
+# --- 2. INSTRAIN PARAMETERS ---
+
+# Optional parameters for `inStrain compare`.
+instrain_params:
+  group_length: "100000"
+  breadth: "0.05"
+  cov: "0.0025"
+  ani: "0.99"
+  # Optional: Path to an STB file for stb_args.
+  # stbPath: "/path/to/your/genomes.stb"
+
+
+# --- 3. ADVANCED CONFIGURATION ---
+
+# Set to `true` if your cluster environment requires loading modules before activating conda.
+use_modules: true
+
+# Conda environment name for inStrain.
+conda_env_name: "instrain"
+
+# Resource allocation for cluster jobs.
+resources:
+  threads: 16
+  mem_mb: 16000
+  time: "24:00:00"
+
