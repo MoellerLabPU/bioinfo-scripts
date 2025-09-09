@@ -2,7 +2,7 @@
 
 This pipeline automates pairwise comparisons of inStrain profiles, offering three flexible modes for defining which samples to compare. It is designed for scalability and can be executed on a local machine or a cluster.
 
-## 1. How It Works
+## How It Works
 
 The pipeline reads a configuration file (`config.yaml`) and a tab-separated file (`pairs_tsv`) to generate and execute `inStrain compare` jobs. The core logic is determined by the `comparison_mode` set in the config.
 
@@ -13,28 +13,29 @@ You can choose one of three modes in `config.yaml`:
 1.  **`type` Mode**:
     *   **Use Case**: Compare all samples belonging to certain "types" (e.g., all "gut" vs. all "skin" samples).
     *   **`profiles_root`**: You must specify a root directory containing subdirectories for each sample type (e.g., `.../profiles/gut/`, `.../profiles/skin/`).
-    *   **`pairs_tsv` Format**: A two-column TSV file. The file should have a header row (which will be ignored), followed by rows containing two sample type names.
+    *   **`pairs_tsv` Format**: A two-column TSV file. The file should have a header row (can be any text, will be ignored), followed by rows containing two sample type names.
       ```tsv
-      sample1   sample2
+      type_A    type_B
       gut       skin
       gut       gut
       ```
 
 2.  **`path` Mode**:
     *   **Use Case**: Compare all profiles located in one directory against all profiles in another.
-    *   **`pairs_tsv` Format**: A two-column TSV file. The file should have a header row (which will be ignored), followed by rows containing two paths to directories.
+    *   **`pairs_tsv` Format**: A two-column TSV file. The file should have a header row (can be any text, will be ignored), followed by rows containing two paths to directories.
       ```tsv
-      path1                     path2
+      directory_A               directory_B
       /path/to/profiles/groupA  /path/to/profiles/groupB
       /path/to/profiles/groupA  /path/to/profiles/groupA
       ```
 
 3.  **`profile` Mode**:
     *   **Use Case**: Compare specific, individual inStrain profiles directly.
-    *   **`pairs_tsv` Format**: A two-column TSV file. The file should have a header row (which will be ignored), followed by rows containing two direct paths to `.IS` profile directories.
+    *   **`pairs_tsv` Format**: A two-column TSV file. The file should have a header row (can be any text, will be ignored), followed by rows containing two direct paths to `.IS` profile directories.
       ```tsv
-      profile1                                  profile2
+      profile_A                                 profile_B
       /path/to/profiles/groupA/sample01.IS      /path/to/profiles/groupB/sample02.IS
+      /path/to/profiles/groupC/sample03.IS      /path/to/profiles/groupD/sample04.IS
       ```
 
 ## 2. Setup and Configuration
@@ -51,7 +52,7 @@ You can choose one of three modes in `config.yaml`:
     *   `resources`: Adjust threads, memory, and time for your cluster environment.
 
 3.  **Create `pairs_tsv`**:
-    *   Create a tab-separated file with a header row and two columns, formatted for your chosen `comparison_mode`.
+    *   Create a tab-separated file with a header row (any column names) and two columns, formatted for your chosen `comparison_mode`. The header row will be ignored during processing.
 
 ## 3. Running the Pipeline
 
@@ -66,12 +67,12 @@ You can choose one of three modes in `config.yaml`:
 2.  **Perform a Dry Run**:
     It's always best to check the jobs that will be executed without actually running them.
     ```bash
-    snakemake -n
+    snakemake -s inStrain_compare_parallel.smk -n
     ```
 
 3.  **Execute the Pipeline**:
     ```bash
-    snakemake --cores <number_of_cores>
+    snakemake -s inStrain_compare_parallel.smk --cores <number_of_cores>
     ```
 
 ### Cluster Execution
@@ -80,12 +81,12 @@ For cluster execution, use the provided Snakemake profile in the `profile/` dire
 
 1.  **Perform a Dry Run**:
     ```bash
-    snakemake --profile profile -n
+    snakemake -s inStrain_compare_parallel.smk --profile profile -n
     ```
 
 2.  **Execute on Cluster**:
     ```bash
-    snakemake --profile profile
+    snakemake -s inStrain_compare_parallel.smk --profile profile
     ```
 
 The profile is pre-configured for SLURM clusters and will:
