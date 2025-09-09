@@ -81,12 +81,12 @@ For cluster execution, use the provided Snakemake profile in the `profile/` dire
 
 1.  **Perform a Dry Run**:
     ```bash
-    snakemake -s inStrain_compare_parallel.smk --profile profile -n
+    snakemake -s inStrain_compare_parallel.smk --profile ../profile -n
     ```
 
 2.  **Execute on Cluster**:
     ```bash
-    snakemake -s inStrain_compare_parallel.smk --profile profile
+    snakemake -s inStrain_compare_parallel.smk --profile ../profile
     ```
 
 The profile is pre-configured for SLURM clusters and will:
